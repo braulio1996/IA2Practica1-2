@@ -1,54 +1,69 @@
 #include <iostream>
 #include <cstdlib>
-#include <math.h>
-#include <opencv2/core/core.hpp>
+#include <cmath>
+#include <opencv2/core/core.hpp> 
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/imgcodecs/imgcodecs.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/video/video.hpp>
 #include <opencv2/videoio/videoio.hpp>
 
-using namespace cv;
 using namespace std;
+using namespace cv;
 
-int main(int argc, char* argv[]) {
+cv::Mat erosion,dilatacion,top_hat,black_hat,operacion,part1,part2,part3,img;
+
+void operaciones(Mat img, Mat elementoEstructurante){
     
-    cv::Mat nueva;
-    Mat imagen1 = imread("I.png");
-    resize(imagen1, imagen1, Size(), 0.5, 0.5);
-    Mat imagen2 = imread("II.png");
-    resize(imagen2, imagen2, Size(), 0.5, 0.5);
-    Mat respuesta = imagen1.clone();
-
-
-    namedWindow("foto1", WINDOW_AUTOSIZE);
-    namedWindow("foto2", WINDOW_AUTOSIZE);
-    namedWindow("respuesta", WINDOW_AUTOSIZE);
-
-    Mat resta;
-    resta = abs(imagen1 - imagen2);
-    //pasamos a escala de gris
-    cvtColor(resta, resta, COLOR_BGR2GRAY);
-
-    int pixel;
-    vector<Point> imagePoints2;
-    for (int i = 0; i < resta.rows; i++) {
-        for (int j = 0; j < resta.cols; j++) {
-            pixel = resta.at<uchar>(i, j);
-            if (pixel > 0) {
-                imagePoints2.push_back(Point(j, i));
-            }
-        }
-    }
-    const Point* pts = (const cv::Point*) Mat(imagePoints2).data;
-    int npts = Mat(imagePoints2).rows;
-    fillPoly(respuesta, &pts, &npts, 1, Scalar(255, 255, 255));
-
-    imshow("foto1", imagen1);
-    imshow("foto2", imagen2);
-    imshow("respuesta", respuesta);
-    imwrite("resultado.png", respuesta);
+    erode(img, erosion, elementoEstructurante);
+    dilate(img, dilatacion, elementoEstructurante);
+    morphologyEx(img, top_hat, MORPH_TOPHAT, elementoEstructurante);
+    morphologyEx(img, black_hat, MORPH_BLACKHAT, elementoEstructurante);
+    absdiff(top_hat, black_hat, operacion);
+    add(img, operacion, operacion);
+    
+    namedWindow("Imagen", WINDOW_AUTOSIZE);
+    imshow("Imagen", img);
+    
+    namedWindow("Erosion imagen", WINDOW_AUTOSIZE);
+    imshow("Erosion imagen", erosion);
+    
+    namedWindow("Dilatacion imagen", WINDOW_AUTOSIZE);
+    imshow("Dilatacion imagen", dilatacion);
+    
+    namedWindow("TopHat imagen", WINDOW_AUTOSIZE);
+    imshow("TopHat imagen", top_hat);
+    
+    namedWindow("BlackHat imagen", WINDOW_AUTOSIZE);
+    imshow("BlackHat imagen", black_hat);
+    
+    namedWindow("Operacion imagen", WINDOW_AUTOSIZE);
+    imshow("Operacion imagen", operacion);
+    
+    
     waitKey(0);
-   // destroyAllWindows();
+}
+
+int main(int argc, char *argv[]){
+    //Kernel para la erosion y dilatacion
+    part1=getStructuringElement(MORPH_CROSS, Size(5,5));
+    part2=getStructuringElement(MORPH_CROSS, Size(15,15));
+    part3=getStructuringElement(MORPH_CROSS, Size(37,37));
+    
+    
+    img = imread("1.jpg", IMREAD_GRAYSCALE);
+    resize(img, img, Size(), 0.3, 0.3);
+    operaciones(img, part1);
+    
+    img = imread("2.jpg", IMREAD_GRAYSCALE);
+    resize(img, img, Size(), 0.3, 0.3);
+    operaciones(img, part2);
+    
+    img = imread("3.jpg", IMREAD_GRAYSCALE);
+    resize(img, img, Size(), 0.3, 0.3);
+    operaciones(img, part3);
+    
+    
     return 0;
 }
+
